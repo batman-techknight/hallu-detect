@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hguard
+      POSTGRES_PASSWORD: hguard
+      POSTGRES_DB: hguard
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  # OpenAI-compatible vLLM server for the generator model under test.
+  # Swap Qwen2.5-7B-Instruct for any free HF model that fits your GPU/CPU budget.
+  vllm-generator:
+    image: vllm/vllm-openai:latest
+    command: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--port", "8001"]
+    ports: ["8001:8001"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Separate model family for the judge, to avoid same-family blind spots.
+  vllm-judge:
+    image: vllm/vllm-openai:latest
+    command: ["--model", "meta-llama/Llama-3.1-8B-Instruct", "--port", "8002"]
+    ports: ["8002:8002"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://hguard:hguard@postgres:5432/hguard
+      REDIS_URL: redis://redis:6379/0
+      GENERATOR_BASE_URL: http://vllm-generator:8001/v1
+      JUDGE_BASE_URL: http://vllm-judge:8002/v1
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  frontend:
+    build: ./frontend
+    ports: ["5173:80"]
+    depends_on: [backend]
+
+volumes:
+  pgdata:
