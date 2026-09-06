@@ -1,4 +1,4 @@
-# Hallucination Guard
+# Hallu-detect
 
 LLM-judges-LLM hallucination detection & correction system. Four-layer pipeline
 (semantic entropy → claim extraction → retrieval + NLI → LLM judge), Redis-cached
@@ -24,7 +24,7 @@ pipeline) and the **claim level** (repeated factual claims skip retrieval + judg
 ## Folder structure
 
 ```
-hallucination-guard/
+hallu-detect/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                 # lint + test backend, build frontend
@@ -91,8 +91,8 @@ hallucination-guard/
 ### Option A — everything in Docker (recommended if you have a GPU for vLLM)
 
 ```bash
-git clone <your-repo-url> hallucination-guard
-cd hallucination-guard
+git clone <your-repo-url> hallu-detect
+cd hallu-detect
 cp .env.example .env          # edit values if needed
 
 docker compose up --build
@@ -191,12 +191,12 @@ From the project root (`hallucination-guard/`):
 ```bash
 git init
 git add .
-git commit -m "Initial commit: hallucination-guard full-stack pipeline"
+git commit -m "Initial commit: hallu-detect full-stack pipeline"
 
 # Create the repo on GitHub first (via github.com/new, or gh CLI below),
 # then link it:
 git branch -M main
-git remote add origin https://github.com/<your-username>/hallucination-guard.git
+git remote add origin https://github.com/<your-username>/hallu-detect.git
 git push -u origin main
 ```
 
@@ -204,7 +204,7 @@ Or, using the GitHub CLI (`gh`) to create the repo in one step instead of
 using the website:
 
 ```bash
-gh repo create hallucination-guard --public --source=. --remote=origin --push
+gh repo create hallu-detect --public --source=. --remote=origin --push
 ```
 
 Subsequent updates:
